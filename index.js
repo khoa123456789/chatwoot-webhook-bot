@@ -26,49 +26,48 @@ const DIALOGFLOW_PROJECT_ID = "chatbot-ai-462513";      // 🔁 thay bằng ID d
 // ========== 🚀 KẾT NỐI DIALOGFLOW ==========
 const dialogflowClient = new SessionsClient();
 
-app.post("/webhook", async (req, res) => {
-  try {
-    const { content, sender, conversation } = req.body;
+app.post("/webhook", (req, res) => {
+  res.sendStatus(200); // 👉 Phản hồi ngay để Chatwoot không gửi lại nhiều lần
 
-    console.log("👉 Nhận tin nhắn từ Chatwoot:", content);
+  (async () => {
+    try {
+      const { content, sender, conversation } = req.body;
+      console.log("👉 Nhận tin nhắn từ Chatwoot:", content);
 
-    const sessionId = sender.id.toString(); // dùng ID người gửi làm session ID
-    const sessionPath = dialogflowClient.projectAgentSessionPath(DIALOGFLOW_PROJECT_ID, sessionId);
+      const sessionId = sender.id.toString();
+      const sessionPath = dialogflowClient.projectAgentSessionPath(DIALOGFLOW_PROJECT_ID, sessionId);
 
-    const request = {
-      session: sessionPath,
-      queryInput: {
-        text: {
-          text: content,
-          languageCode: "vi",
+      const request = {
+        session: sessionPath,
+        queryInput: {
+          text: {
+            text: content,
+            languageCode: "vi",
+          },
         },
-      },
-    };
+      };
 
-    const responses = await dialogflowClient.detectIntent(request);
-    const reply = responses[0].queryResult.fulfillmentText;
+      const responses = await dialogflowClient.detectIntent(request);
+      const reply = responses[0].queryResult.fulfillmentText;
 
-    console.log("🤖 Trả lời từ Dialogflow:", reply);
+      console.log("🤖 Trả lời từ Dialogflow:", reply);
 
-    // Gửi trả lời lại cho Chatwoot
-    await axios.post(
-      `https://app.chatwoot.com/api/v1/accounts/${CHATWOOT_ACCOUNT_ID}/conversations/${conversation.id}/messages`,
-      {
-        content: reply,
-        message_type: "outgoing",
-      },
-      {
-        headers: {
-          api_access_token: CHATWOOT_API_TOKEN,
+      await axios.post(
+        `https://app.chatwoot.com/api/v1/accounts/${CHATWOOT_ACCOUNT_ID}/conversations/${conversation.id}/messages`,
+        {
+          content: reply,
+          message_type: "outgoing",
         },
-      }
-    );
-
-    res.sendStatus(200);
-  } catch (err) {
-    console.error("❌ Lỗi xử lý webhook:", err.message);
-    res.sendStatus(500);
-  }
+        {
+          headers: {
+            api_access_token: CHATWOOT_API_TOKEN,
+          },
+        }
+      );
+    } catch (err) {
+      console.error("❌ Lỗi xử lý webhook (hậu trả lời):", err.message);
+    }
+  })();
 });
 
 const PORT = process.env.PORT || 3000;
