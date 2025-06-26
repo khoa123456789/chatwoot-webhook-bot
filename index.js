@@ -13,6 +13,8 @@ if (process.env.GOOGLE_APPLICATION_CREDENTIALS_BASE64) {
   const keyJson = Buffer.from(process.env.GOOGLE_APPLICATION_CREDENTIALS_BASE64, "base64").toString("utf8");
   fs.writeFileSync("/tmp/key.json", keyJson);
   process.env.GOOGLE_APPLICATION_CREDENTIALS = "/tmp/key.json";
+  console.log("📄 File key.json đã ghi vào /tmp/key.json");
+  console.log("🔑 Key JSON preview:", keyJson.slice(0, 100));
 }
 
 // ========== 🧠 KHAI BÁO THÔNG TIN CHATWOOT ==========
