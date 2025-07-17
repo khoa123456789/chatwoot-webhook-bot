@@ -21,20 +21,20 @@ const CHATWOOT_API_TOKEN = "4k9xJUAh1UG7AK6ofLH3vWsV";
 const CHATWOOT_ACCOUNT_ID = "125824";
 const DIALOGFLOW_PROJECT_ID = "chatbot-ai-462513";
 
-// 🔌 Kết nối MySQL XAMPP (cài mysql2 trước: `npm install mysql2`)
+// 🔌 Kết nối MySQL XAMPP
 const db = mysql.createPool({
   host: "localhost",
   user: "root",
-  password: "",         // nếu có mật khẩu thì thêm vào đây
-  database: "datn",  // thay tên database của bạn
+  password: "",
+  database: "datn",
 });
 
 // 🚀 Kết nối Dialogflow
 const dialogflowClient = new SessionsClient();
 
-// 📬 Webhook nhận tin nhắn từ Chatwoot
+// 📬 Webhook nhận tin nhắn từ Chatwoot → gửi lên Dialogflow xử lý
 app.post("/webhook", async (req, res) => {
-  res.sendStatus(200); // Trả về ngay tránh retry
+  res.sendStatus(200); // Gửi 200 để Chatwoot không retry
 
   try {
     const { content, sender, conversation, message_type } = req.body;
@@ -56,13 +56,13 @@ app.post("/webhook", async (req, res) => {
 
     const responses = await dialogflowClient.detectIntent(request);
     const result = responses[0].queryResult;
-    let reply = result.fulfillmentText;
+    let reply = result.fulfillmentText || "Xin chào! Tôi có thể giúp gì cho bạn?";
     const intentName = result.intent.displayName;
     const parameters = result.parameters.fields;
 
-    // ✅ Xử lý Intent hỏi tour theo khu vực
-    if (intentName === "ListTourByRegionIntent" && parameters.region) {
-      const region = parameters.location;
+    // ✅ Nếu là intent hỏi tour theo khu vực → xử lý riêng
+    if (intentName === "ListTourByRegionIntent" && parameters.location) {
+      const region = parameters.location.stringValue || "";
       const [locations] = await db.query("SELECT id FROM locations WHERE l_name LIKE ?", [`%${region}%`]);
 
       if (locations.length === 0) {
@@ -81,7 +81,7 @@ app.post("/webhook", async (req, res) => {
 
     console.log("🤖 Trả lời:", reply);
 
-    // Gửi lại tin nhắn về Chatwoot
+    // Gửi trả lời về Chatwoot
     await axios.post(
       `https://app.chatwoot.com/api/v1/accounts/${CHATWOOT_ACCOUNT_ID}/conversations/${conversation.id}/messages`,
       {
@@ -99,7 +99,43 @@ app.post("/webhook", async (req, res) => {
   }
 });
 
-// Khởi động server
+// ✅ Webhook xử lý trực tiếp từ Dialogflow (dùng cho simulator hoặc webhook intent)
+app.post("/dialogflow", async (req, res) => {
+  try {
+    const intentName = req.body.queryResult.intent.displayName;
+    const parameters = req.body.queryResult.parameters;
+    let reply = "Tôi chưa rõ yêu cầu của bạn.";
+
+    if (intentName === "ListTourByRegionIntent" && parameters.location) {
+      const region = parameters.location;
+      const [locations] = await db.query("SELECT id FROM locations WHERE l_name LIKE ?", [`%${region}%`]);
+
+      if (locations.length === 0) {
+        reply = `Hiện tại không có tour nào ở khu vực "${region}".`;
+      } else {
+        const locationId = locations[0].id;
+        const [tours] = await db.query("SELECT t_title, t_price_adults FROM tours WHERE t_location_id = ?", [locationId]);
+
+        if (tours.length === 0) {
+          reply = `Chưa có tour nào trong khu vực "${region}".`;
+        } else {
+          reply = `Các tour ở ${region}:\n` + tours.map(t => `• ${t.t_title} – ${t.t_price_adults.toLocaleString()}đ`).join("\n");
+        }
+      }
+    }
+
+    return res.json({
+      fulfillmentText: reply,
+    });
+  } catch (err) {
+    console.error("❌ Lỗi xử lý Dialogflow webhook:", err.message);
+    return res.json({
+      fulfillmentText: "Xin lỗi, hệ thống đang gặp lỗi khi xử lý yêu cầu.",
+    });
+  }
+});
+
+// 🚀 Khởi động server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`✅ Bot đang chạy tại http://localhost:${PORT}`);
