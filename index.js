@@ -62,7 +62,7 @@ app.post("/webhook", async (req, res) => {
 
     // ✅ Xử lý Intent hỏi tour theo khu vực
     if (intentName === "ListTourByRegionIntent" && parameters.region) {
-      const region = parameters.region.stringValue.toLowerCase();
+      const region = parameters.location;
       const [locations] = await db.query("SELECT id FROM locations WHERE l_name LIKE ?", [`%${region}%`]);
 
       if (locations.length === 0) {
