@@ -76,7 +76,7 @@ app.post("/webhook", async (req, res) => {
         if (tours.length === 0) {
           reply = `Chưa có tour nào trong khu vực "${region}".`;
         } else {
-          reply = `Các tour ở ${region}:\n` + tours.map(t => `• ${t.t_title} – ${t.t_price_adults.toLocaleString()}đ`).join("\n");
+          reply = `Các tour ở ${region}:\n` + tours.map(t => `• ${t.t_title} – ${t.t_price_adults.toLocaleString()}đ`).join("\n") + `\n\n👉 Bạn quan tâm đến tour nào?`;
         }
       }
     }
