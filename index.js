@@ -59,6 +59,7 @@ app.post("/webhook", async (req, res) => {
     let reply = result.fulfillmentText || "Xin chào! Tôi có thể giúp gì cho bạn?";
     const intentName = result.intent.displayName;
     const parameters = result.parameters.fields;
+    console.log("📦 Parameters nhận được:", JSON.stringify(parameters, null, 2));
 
     // ✅ Nếu là intent hỏi tour theo khu vực → xử lý riêng
     if (intentName === "ListTourByRegionIntent" && parameters.location) {
@@ -95,7 +96,7 @@ app.post("/webhook", async (req, res) => {
       }
     );
   } catch (err) {
-    console.error("❌ Lỗi webhook xử lý:", err.message);
+    console.error("❌ Lỗi webhook xử lý:", err);
   }
 });
 
@@ -104,6 +105,7 @@ app.post("/dialogflow", async (req, res) => {
   try {
     const intentName = req.body.queryResult.intent.displayName;
     const parameters = req.body.queryResult.parameters;
+    console.log("📦 Parameters nhận được:", JSON.stringify(parameters, null, 2));
     let reply = "Tôi chưa rõ yêu cầu của bạn.";
 
     if (intentName === "ListTourByRegionIntent" && parameters.location) {
@@ -145,7 +147,7 @@ app.post("/dialogflow", async (req, res) => {
       fulfillmentText: reply,
     });
   } catch (err) {
-    console.error("❌ Lỗi xử lý Dialogflow webhook:", err.message);
+    console.error("❌ Lỗi xử lý Dialogflow webhook:", err);
     return res.json({
       fulfillmentText: "Xin lỗi, hệ thống đang gặp lỗi khi xử lý yêu cầu.",
     });
