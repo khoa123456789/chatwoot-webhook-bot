@@ -139,7 +139,7 @@ app.post("/dialogflow", async (req, res) => {
                 (t) =>
                   `• ${t.t_title} – ${t.t_price_adults.toLocaleString()}đ`
               )
-              .join("\n");
+              .join("\n") + `\n\n👉 Bạn quan tâm đến tour nào?`;
         }
       }
     }
