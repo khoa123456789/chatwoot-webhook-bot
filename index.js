@@ -107,19 +107,36 @@ app.post("/dialogflow", async (req, res) => {
     let reply = "Tôi chưa rõ yêu cầu của bạn.";
 
     if (intentName === "ListTourByRegionIntent" && parameters.location) {
-      const region = parameters.location;
-      const [locations] = await db.query("SELECT id FROM locations WHERE l_name LIKE ?", [`%${region}%`]);
+      const region =
+        typeof parameters.location === "string"
+          ? parameters.location
+          : parameters.location?.stringValue || "";
+
+      const [locations] = await db.query(
+        "SELECT id FROM locations WHERE l_name LIKE ?",
+        [`%${region}%`]
+      );
 
       if (locations.length === 0) {
         reply = `Hiện tại không có tour nào ở khu vực "${region}".`;
       } else {
         const locationId = locations[0].id;
-        const [tours] = await db.query("SELECT t_title, t_price_adults FROM tours WHERE t_location_id = ?", [locationId]);
+        const [tours] = await db.query(
+          "SELECT t_title, t_price_adults FROM tours WHERE t_location_id = ?",
+          [locationId]
+        );
 
         if (tours.length === 0) {
           reply = `Chưa có tour nào trong khu vực "${region}".`;
         } else {
-          reply = `Các tour ở ${region}:\n` + tours.map(t => `• ${t.t_title} – ${t.t_price_adults.toLocaleString()}đ`).join("\n");
+          reply =
+            `Các tour ở ${region}:\n` +
+            tours
+              .map(
+                (t) =>
+                  `• ${t.t_title} – ${t.t_price_adults.toLocaleString()}đ`
+              )
+              .join("\n");
         }
       }
     }
@@ -134,7 +151,6 @@ app.post("/dialogflow", async (req, res) => {
     });
   }
 });
-
 // 🚀 Khởi động server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
