@@ -23,10 +23,11 @@ const DIALOGFLOW_PROJECT_ID = "chatbot-ai-462513";
 
 // 🔌 Kết nối MySQL XAMPP
 const db = mysql.createPool({
-  host: "localhost",
+  host: "nozomi.proxy.rlwy.net",
   user: "root",
-  password: "",
-  database: "datn",
+  password: "BNSCbilgTFWfSdjZbJdlMuBjfAYHNnXz",
+  port: 30418,
+  database: "railway",
 });
 
 // 🚀 Kết nối Dialogflow
