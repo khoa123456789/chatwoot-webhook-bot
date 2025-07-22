@@ -80,6 +80,26 @@ app.post("/webhook", async (req, res) => {
         }
       }
     }
+    // 🔍 Tìm tour theo địa điểm cụ thể
+    if (intentName === "FindTourByLocationIntent" && parameters.diadiem) {
+      const location = parameters.diadiem.stringValue || "";
+      const [tours] = await db.query(
+        "SELECT t_title, t_price_adults FROM tours WHERE t_title LIKE ?",
+        [`%${location}%`]
+      );
+
+      if (tours.length === 0) {
+        reply = `Hiện tại chưa có tour nào đến "${location}".`;
+      } else {
+        reply =
+          `Các tour đến ${location}:\n` +
+          tours
+            .map(
+              (t) => `• ${t.t_title} – ${t.t_price_adults.toLocaleString()}đ`
+            )
+            .join("\n") + `\n\n👉 Bạn muốn đặt tour nào?`;
+      }
+    }
 
     console.log("🤖 Trả lời:", reply);
 
@@ -139,9 +159,33 @@ app.post("/dialogflow", async (req, res) => {
                 (t) =>
                   `• ${t.t_title} – ${t.t_price_adults.toLocaleString()}đ`
               )
-              .join("\n") + 
+              .join("\n") +
             `\n\n👉 Bạn quan tâm đến tour nào?`;
         }
+      }
+    }
+    // 🔍 Tìm tour theo địa điểm nhập vào (trên tiêu đề tour)
+    else if (intentName === "FindTourByLocationIntent" && parameters.diadiem) {
+      const location =
+        typeof parameters.diadiem === "string"
+          ? parameters.diadiem
+          : parameters.diadiem?.stringValue || "";
+
+      const [tours] = await db.query(
+        "SELECT t_title, t_price_adults FROM tours WHERE t_title LIKE ?",
+        [`%${location}%`]
+      );
+
+      if (tours.length === 0) {
+        reply = `Hiện tại chưa có tour nào đến "${location}".`;
+      } else {
+        reply =
+          `Các tour đến ${location}:\n` +
+          tours
+            .map(
+              (t) => `• ${t.t_title} – ${t.t_price_adults.toLocaleString()}đ`
+            )
+            .join("\n") + `\n\n👉 Bạn muốn đặt tour nào?`;
       }
     }
 
