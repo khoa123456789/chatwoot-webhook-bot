@@ -81,8 +81,8 @@ app.post("/webhook", async (req, res) => {
       }
     }
     // 🔍 Tìm tour theo địa điểm cụ thể
-    if (intentName === "FindTourByLocationIntent" && parameters.diadiem) {
-      const location = parameters.diadiem.stringValue || "";
+    if (intentName === "FindTourByLocationIntent" && parameters.diadiem1) {
+      const location = parameters.diadiem1.stringValue || "";
       const [tours] = await db.query(
         "SELECT t_title, t_price_adults FROM tours WHERE t_title LIKE ?",
         [`%${location}%`]
@@ -165,11 +165,11 @@ app.post("/dialogflow", async (req, res) => {
       }
     }
     // 🔍 Tìm tour theo địa điểm nhập vào (trên tiêu đề tour)
-    else if (intentName === "FindTourByLocationIntent" && parameters.diadiem) {
+    else if (intentName === "FindTourByLocationIntent" && parameters.diadiem1) {
       const location =
-        typeof parameters.diadiem === "string"
-          ? parameters.diadiem
-          : parameters.diadiem?.stringValue || "";
+        typeof parameters.diadiem1 === "string"
+          ? parameters.diadiem1
+          : parameters.diadiem1?.stringValue || "";
 
       const [tours] = await db.query(
         "SELECT t_title, t_price_adults FROM tours WHERE t_title LIKE ?",
